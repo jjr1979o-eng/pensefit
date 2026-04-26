@@ -13,6 +13,7 @@ import {
   PlusCircle,
   CalendarDays,
   DollarSign,
+  TrendingUp,
   Loader2
 } from 'lucide-react';
 import { getCompras, getIngredientes, getMarmitas } from '../lib/storage';
@@ -112,6 +113,25 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
         <h2 className="text-3xl font-bold tracking-tight text-slate-800">Dashboard</h2>
         <p className="text-slate-500 font-medium">Relatório operacional simplificado</p>
       </header>
+
+      {/* Dinâmica Financeira simplified explanation */}
+      <div className="bg-gradient-to-r from-emerald-600 to-teal-700 p-8 rounded-[40px] text-white shadow-2xl shadow-emerald-200 relative overflow-hidden group">
+        <div className="absolute top-0 right-0 p-8 opacity-20 transform translate-x-4 -translate-y-4 group-hover:scale-110 transition-transform">
+          <DollarSign size={120} strokeWidth={3} />
+        </div>
+        <div className="relative z-10 space-y-4 max-w-xl">
+          <div className="inline-flex items-center gap-2 bg-white/20 px-4 py-1.5 rounded-full backdrop-blur-md">
+            <TrendingUp size={14} strokeWidth={3} />
+            <span className="text-[10px] font-black uppercase tracking-widest text-emerald-50">Fluxo Inteligente de Custos</span>
+          </div>
+          <h3 className="text-3xl font-black tracking-tighter leading-none italic">
+            COMPROU • ATUALIZOU • LUCROU
+          </h3>
+          <p className="text-sm font-medium text-emerald-50/80 leading-relaxed">
+            Nossa dinâmica é direta: Ao registrar uma <span className="font-bold underline decoration-white/30 decoration-2">Compra</span>, o sistema recalcula o custo do <span className="font-bold underline decoration-white/30 decoration-2">Ingrediente</span> no seu estoque. Suas <span className="font-bold underline decoration-white/30 decoration-2">Marmitas</span> usam sempre o último valor, garantindo lucro real sem cálculos manuais.
+          </p>
+        </div>
+      </div>
 
       {/* Stats Row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

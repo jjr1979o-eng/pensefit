@@ -61,7 +61,7 @@ export default function NovaCompra({ onBack }: NovaCompraProps) {
     try {
       setIsSaving(true);
       await saveCompra(formData);
-      alert('Compra salva com sucesso! O ingrediente foi atualizado na nuvem.');
+      // Removed blocking alert for smoother transition
       onBack();
     } catch (error) {
       console.error("Error saving purchase:", error);

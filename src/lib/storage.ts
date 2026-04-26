@@ -166,11 +166,12 @@ export const saveCompra = async (compra: Omit<Compra, 'id' | 'criadoEm'>) => {
       const ingRef = doc(db, pathIngrediente, ing.id);
       await updateDoc(ingRef, {
         categoria: compra.categoria,
-        ultimoCustoPorKg: custoPorKg ?? ing.ultimoCustoPorKg,
-        ultimoCustoPorGrama: custoPorGrama ?? ing.ultimoCustoPorGrama,
-        ultimoCustoPorUnidade: custoPorUnidade ?? ing.ultimoCustoPorUnidade,
+        ultimoCustoPorKg: custoPorKg || ing.ultimoCustoPorKg,
+        ultimoCustoPorGrama: custoPorGrama || ing.ultimoCustoPorGrama,
+        ultimoCustoPorUnidade: custoPorUnidade || ing.ultimoCustoPorUnidade,
         dataUltimaCompra: compra.data,
         localUltimaCompra: compra.localCompra,
+        unidadeOriginal: compra.unidade, // Sincroniza a unidade para facilitar marmitas
         historicoPrecos: [historicoEntry, ...ing.historicoPrecos].slice(0, 50)
       });
     } else {
@@ -183,6 +184,7 @@ export const saveCompra = async (compra: Omit<Compra, 'id' | 'criadoEm'>) => {
         ultimoCustoPorUnidade: custoPorUnidade || 0,
         dataUltimaCompra: compra.data,
         localUltimaCompra: compra.localCompra,
+        unidadeOriginal: compra.unidade,
         historicoPrecos: [historicoEntry]
       };
       await addDoc(collection(db, pathIngrediente), novoIng);

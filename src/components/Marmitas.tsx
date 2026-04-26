@@ -359,7 +359,14 @@ export default function Marmitas({ onBack }: MarmitasProps) {
                         onChange={(e) => updateIngredienteItem(idx, 'ingredienteId', e.target.value)}
                         className="flex-1 min-w-0 p-2 bg-transparent outline-none font-black text-slate-700 cursor-pointer"
                       >
-                        {allIngredientes.map(i => <option key={i.id} value={i.id}>{i.nome}</option>)}
+                        <option value="" disabled>Selecione um ingrediente...</option>
+                        {allIngredientes
+                          .sort((a, b) => a.nome.localeCompare(b.nome))
+                          .map(i => (
+                            <option key={i.id} value={i.id}>
+                              {i.nome} ({formatCurrency(i.ultimoCustoPorKg || i.ultimoCustoPorUnidade || 0)}/{i.unidadeOriginal || (i.ultimoCustoPorKg ? 'kg' : 'un')})
+                            </option>
+                          ))}
                       </select>
                       
                       <div className="flex items-center gap-4 shrink-0">

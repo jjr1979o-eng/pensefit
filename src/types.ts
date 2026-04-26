@@ -37,6 +37,7 @@ export interface Ingrediente {
   ultimoCustoPorUnidade?: number;
   dataUltimaCompra: string;
   localUltimaCompra: string;
+  unidadeOriginal?: Unidade;
   historicoPrecos: HistoricoPreco[];
 }
 

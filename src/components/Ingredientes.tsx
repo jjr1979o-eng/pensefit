@@ -257,13 +257,13 @@ export default function Ingredientes({ onBack }: IngredientesProps) {
                   <div className="flex justify-between items-end bg-slate-50 p-4 rounded-2xl border border-slate-50 group-hover:bg-emerald-50 transition-colors">
                     <div>
                       <p className="text-[9px] text-slate-400 uppercase font-black tracking-widest mb-1">Preço Atual</p>
-                      <p className="text-2xl font-black text-slate-800">
-                        {formatCurrency(ing.ultimoCustoPorKg || ing.ultimoCustoPorUnidade || 0)}
+                      <p className={`text-2xl font-black ${(!ing.ultimoCustoPorKg && !ing.ultimoCustoPorUnidade) ? 'text-amber-500' : 'text-slate-800'}`}>
+                        {(!ing.ultimoCustoPorKg && !ing.ultimoCustoPorUnidade) ? 'Pendente' : formatCurrency(ing.ultimoCustoPorKg || ing.ultimoCustoPorUnidade || 0)}
                       </p>
                     </div>
                     <div className="text-right">
                        <p className="text-[9px] text-slate-400 uppercase font-black mb-1">Unidade</p>
-                       <p className="font-black text-slate-600 text-sm">{ing.ultimoCustoPorKg ? 'kg' : 'un'}</p>
+                       <p className="font-black text-slate-600 text-sm">{ing.unidadeOriginal || (ing.ultimoCustoPorKg ? 'kg' : 'un')}</p>
                     </div>
                   </div>
 

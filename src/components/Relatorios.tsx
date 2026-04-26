@@ -4,8 +4,8 @@
  */
 
 import { useMemo, useState, useEffect } from 'react';
-import { ArrowLeft, Download, BarChart3, TrendingUp, DollarSign, PieChart, Info, Loader2 } from 'lucide-react';
-import { getCompras, getIngredientes, getMarmitas } from '../lib/storage';
+import { ArrowLeft, Download, BarChart3, TrendingUp, DollarSign, PieChart, Info, Loader2, Trash2 } from 'lucide-react';
+import { getCompras, getIngredientes, getMarmitas, deleteCompra } from '../lib/storage';
 import { Compra, Ingrediente, Marmita } from '../types';
 
 interface RelatoriosProps {
@@ -18,25 +18,38 @@ export default function Relatorios({ onBack }: RelatoriosProps) {
   const [marmitas, setMarmitas] = useState<Marmita[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    async function loadData() {
-      try {
-        const [c, i, m] = await Promise.all([
-          getCompras(),
-          getIngredientes(),
-          getMarmitas()
-        ]);
-        setCompras(c);
-        setIngredientes(i);
-        setMarmitas(m);
-      } catch (error) {
-        console.error("Error loading relatorios data:", error);
-      } finally {
-        setLoading(false);
-      }
+  async function loadData() {
+    try {
+      setLoading(true);
+      const [c, i, m] = await Promise.all([
+        getCompras(),
+        getIngredientes(),
+        getMarmitas()
+      ]);
+      setCompras(c);
+      setIngredientes(i);
+      setMarmitas(m);
+    } catch (error) {
+      console.error("Error loading relatorios data:", error);
+    } finally {
+      setLoading(false);
     }
+  }
+
+  useEffect(() => {
     loadData();
   }, []);
+
+  const handleDeleteCompra = async (id: string) => {
+    if (confirm('Tem certeza que deseja excluir este registro de compra?')) {
+      try {
+        await deleteCompra(id);
+        await loadData();
+      } catch (error) {
+        alert('Erro ao excluir compra');
+      }
+    }
+  };
 
   const reports = useMemo(() => {
     const ingMaisCaros = [...ingredientes]
@@ -189,6 +202,51 @@ export default function Relatorios({ onBack }: RelatoriosProps) {
              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-200 mb-2">Ativos em Catálogo</p>
              <p className="text-4xl font-black">{marmitas.length}</p>
           </div>
+        </div>
+      </div>
+
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h3 className="text-xl font-black text-slate-800 tracking-tight italic">Últimas Compras Registradas</h3>
+          <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{compras.length} registros</span>
+        </div>
+        
+        <div className="bg-white rounded-[40px] border border-slate-100 shadow-xl overflow-hidden">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-slate-50">
+                <th className="p-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Data</th>
+                <th className="p-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Produto</th>
+                <th className="p-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Valor</th>
+                <th className="p-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Local</th>
+                <th className="p-5 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Ação</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-50">
+              {compras.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="p-10 text-center text-slate-400 font-medium italic">Nenhuma compra registrada ainda.</td>
+                </tr>
+              ) : (
+                compras.sort((a,b) => new Date(b.data).getTime() - new Date(a.data).getTime()).slice(0, 50).map(c => (
+                  <tr key={c.id} className="hover:bg-slate-50 transition-colors group">
+                    <td className="p-5 text-sm font-bold text-slate-500">{c.data}</td>
+                    <td className="p-5 text-sm font-black text-slate-700">{c.nomeProduto}</td>
+                    <td className="p-5 text-sm font-black text-emerald-600">{formatCurrency(c.valorPago)}</td>
+                    <td className="p-5 text-sm font-medium text-slate-400">{c.localCompra || '-'}</td>
+                    <td className="p-5 text-right">
+                      <button 
+                        onClick={() => handleDeleteCompra(c.id)}
+                        className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
 
