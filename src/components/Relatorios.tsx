@@ -237,7 +237,7 @@ export default function Relatorios({ onBack }: RelatoriosProps) {
                     <td className="p-5 text-right">
                       <button 
                         onClick={() => handleDeleteCompra(c.id)}
-                        className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                        className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
                       >
                         <Trash2 size={18} />
                       </button>

@@ -23,6 +23,7 @@ const UNIDADES: Unidade[] = [
 
 export default function NovaCompra({ onBack }: NovaCompraProps) {
   const [isSaving, setIsSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
   const [formData, setFormData] = useState({
     data: new Date().toISOString().split('T')[0],
     nomeProduto: '',
@@ -61,8 +62,10 @@ export default function NovaCompra({ onBack }: NovaCompraProps) {
     try {
       setIsSaving(true);
       await saveCompra(formData);
-      // Removed blocking alert for smoother transition
-      onBack();
+      setSaveSuccess(true);
+      setTimeout(() => {
+        onBack();
+      }, 1500);
     } catch (error) {
       console.error("Error saving purchase:", error);
       alert('Erro ao salvar compra.');
@@ -77,7 +80,19 @@ export default function NovaCompra({ onBack }: NovaCompraProps) {
   };
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6 pb-20">
+    <div className={`max-w-2xl mx-auto space-y-6 pb-20 transition-opacity duration-500 ${saveSuccess ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
+      {saveSuccess && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-white/60 backdrop-blur-sm">
+          <div className="bg-emerald-600 p-10 rounded-[40px] shadow-2xl flex flex-col items-center gap-4 animate-in zoom-in duration-300">
+            <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center text-white">
+              <Save size={40} />
+            </div>
+            <h3 className="text-2xl font-black text-white italic">REGISTRADO!</h3>
+            <p className="text-emerald-50 font-medium">Sincronizando com a nuvem...</p>
+          </div>
+        </div>
+      )}
+
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <button onClick={onBack} className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-500">
