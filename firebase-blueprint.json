@@ -1,0 +1,126 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile information",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email"]
+    },
+    "Ingrediente": {
+      "title": "Ingrediente",
+      "description": "Material or food item used in recipes",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "nome": { "type": "string" },
+        "categoria": { "type": "string" },
+        "ultimoCustoPorKg": { "type": "number" },
+        "ultimoCustoPorGrama": { "type": "number" },
+        "ultimoCustoPorUnidade": { "type": "number" },
+        "dataUltimaCompra": { "type": "string" },
+        "localUltimaCompra": { "type": "string" },
+        "historicoPrecos": {
+          "type": "array",
+          "items": { "$ref": "#/entities/HistoricoPreco" }
+        }
+      }
+    },
+    "HistoricoPreco": {
+      "title": "HistoricoPreco",
+      "description": "Historical price point for an ingredient",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "data": { "type": "string" },
+        "custoPorKg": { "type": "number" },
+        "custoPorUnidade": { "type": "number" },
+        "localCompra": { "type": "string" },
+        "quantidade": { "type": "number" },
+        "unidade": { "type": "string" }
+      }
+    },
+    "Marmita": {
+      "title": "Marmita",
+      "description": "A complete dish with cost calculation",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "codigo": { "type": "string" },
+        "nome": { "type": "string" },
+        "pesoTotalGramas": { "type": "number" },
+        "custoIngredientes": { "type": "number" },
+        "custoEmbalagem": { "type": "number" },
+        "taxaIfood": { "type": "number" },
+        "taxaMaquininha": { "type": "number" },
+        "outrosCustos": { "type": "number" },
+        "custoTotal": { "type": "number" },
+        "precoVenda": { "type": "number" },
+        "lucroBruto": { "type": "number" },
+        "margemPercentual": { "type": "number" },
+        "custoPor100g": { "type": "number" },
+        "ingredientes": {
+          "type": "array",
+          "items": { "$ref": "#/entities/MarmitaIngrediente" }
+        }
+      }
+    },
+    "MarmitaIngrediente": {
+      "title": "MarmitaIngrediente",
+      "description": "Ingredient usage in a marmita",
+      "type": "object",
+      "properties": {
+        "ingredienteId": { "type": "string" },
+        "id": { "type": "string" },
+        "nome": { "type": "string" },
+        "quantidadeGramas": { "type": "number" },
+        "custoTotal": { "type": "number" }
+      }
+    },
+    "Compra": {
+      "title": "Compra",
+      "description": "Purchase record tracked from scanner or manual entry",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "data": { "type": "string" },
+        "nomeProduto": { "type": "string" },
+        "categoria": { "type": "string" },
+        "localCompra": { "type": "string" },
+        "quantidade": { "type": "number" },
+        "unidadeMedida": { "type": "string" },
+        "valorPago": { "type": "number" },
+        "custoPorKg": { "type": "number" },
+        "custoPorGrama": { "type": "number" },
+        "custoPorUnidade": { "type": "number" }
+      }
+    }
+  },
+  "firestore": {
+    "users": {
+      "schema": "User",
+      "description": "User profiles"
+    },
+    "ingredientes": {
+      "schema": "Ingrediente",
+      "description": "User owned ingredients and price history"
+    },
+    "marmitas": {
+      "schema": "Marmita",
+      "description": "User owned recipes and calculations"
+    },
+    "compras": {
+      "schema": "Compra",
+      "description": "User owned purchase logs"
+    }
+  }
+}
