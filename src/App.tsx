@@ -57,6 +57,9 @@ function LoginScreen() {
         </button>
 
         <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em]">Seus dados sempre seguros e sincronizados</p>
+        <div className="pt-4 border-t border-slate-50">
+          <p className="text-[9px] text-slate-300 font-medium">Nota: Se estiver no Netlify, adicione o domínio no Firebase Console.</p>
+        </div>
       </div>
     </div>
   );

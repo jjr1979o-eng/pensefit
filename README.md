@@ -1,20 +1,27 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# Pensefit Custos 🚀
 
-# Run and deploy your AI Studio app
+Professional management for modern meal prep businesses.
 
-This contains everything you need to run your app locally.
+## Features
+- 📊 Cloud Dashboard
+- 🛒 Cloud-synced Ingredients & Purchases
+- 🍱 Recipe Cost Calculation
+- 📄 Receipt Scanner (OCR)
+- 🔒 Secure Firebase Authentication
 
-View your app in AI Studio: https://ai.studio/apps/e1f23ff8-a7c8-4d31-a3d1-53ae2013f92f
+## Netlify Deployment Tips
+To make the application work on Netlify:
 
-## Run Locally
+1. **SPA Redirects**: This project includes a `netlify.toml` and `public/_redirects` to handle SPA routing.
+2. **Authorized Domains**: You **MUST** add your Netlify domain (e.g., `yourapp.netlify.app`) to the **Authorized Domains** list in the **Firebase Console**:
+   - Go to [Firebase Console](https://console.firebase.google.com/)
+   - Select your project
+   - Authentication > Settings > Authorized domains
+   - Add your Netlify URL
+3. **Environment**: If you use custom env vars, set them in the Netlify dashboard.
 
-**Prerequisites:**  Node.js
-
-
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+## Local Development
+```bash
+npm install
+npm run dev
+```
