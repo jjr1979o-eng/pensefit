@@ -1,6 +1,6 @@
 {
   "name": "Pensefit Custos",
-  "description": "Aplicativo para controle de custos de produção de marmitas congeladas da Pensefit.",
+  "description": "Controle de custos Pensefit com sincronização em nuvem e scanner de comprovantes.",
   "requestFramePermissions": [],
   "majorCapabilities": []
 }

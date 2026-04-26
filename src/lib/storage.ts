@@ -41,6 +41,43 @@ export const calcularCustosPorUnidade = (quantidade: number, unidade: Unidade, v
 
 // --- Firestore Sync & CRUD ---
 
+enum OperationType {
+  CREATE = 'create',
+  UPDATE = 'update',
+  DELETE = 'delete',
+  LIST = 'list',
+  GET = 'get',
+  WRITE = 'write',
+}
+
+interface FirestoreErrorInfo {
+  error: string;
+  operationType: OperationType;
+  path: string | null;
+  authInfo: {
+    userId?: string | null;
+    email?: string | null;
+    emailVerified?: boolean | null;
+    isAnonymous?: boolean | null;
+  }
+}
+
+function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
+  const errInfo: FirestoreErrorInfo = {
+    error: error instanceof Error ? error.message : String(error),
+    authInfo: {
+      userId: auth.currentUser?.uid,
+      email: auth.currentUser?.email,
+      emailVerified: auth.currentUser?.emailVerified,
+      isAnonymous: auth.currentUser?.isAnonymous,
+    },
+    operationType,
+    path
+  }
+  console.error('Firestore Error: ', JSON.stringify(errInfo));
+  throw new Error(JSON.stringify(errInfo));
+}
+
 const getUserId = () => {
   const user = auth.currentUser;
   if (!user) throw new Error('User not authenticated');
@@ -48,144 +85,198 @@ const getUserId = () => {
 };
 
 export const getCompras = async (): Promise<Compra[]> => {
-  const userId = getUserId();
-  const q = query(collection(db, 'compras'), where('userId', '==', userId));
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Compra));
+  const path = 'compras';
+  try {
+    const userId = getUserId();
+    const q = query(collection(db, path), where('userId', '==', userId));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Compra));
+  } catch (error) {
+    handleFirestoreError(error, OperationType.GET, path);
+    return [];
+  }
 };
 
 export const getIngredientes = async (): Promise<Ingrediente[]> => {
-  const userId = getUserId();
-  const q = query(collection(db, 'ingredientes'), where('userId', '==', userId));
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Ingrediente));
+  const path = 'ingredientes';
+  try {
+    const userId = getUserId();
+    const q = query(collection(db, path), where('userId', '==', userId));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Ingrediente));
+  } catch (error) {
+    handleFirestoreError(error, OperationType.GET, path);
+    return [];
+  }
 };
 
 export const getMarmitas = async (): Promise<Marmita[]> => {
-  const userId = getUserId();
-  const q = query(collection(db, 'marmitas'), where('userId', '==', userId));
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Marmita));
+  const path = 'marmitas';
+  try {
+    const userId = getUserId();
+    const q = query(collection(db, path), where('userId', '==', userId));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Marmita));
+  } catch (error) {
+    handleFirestoreError(error, OperationType.GET, path);
+    return [];
+  }
 };
 
 export const saveCompra = async (compra: Omit<Compra, 'id' | 'criadoEm'>) => {
-  const userId = getUserId();
-  const { custoPorKg, custoPorGrama, custoPorUnidade } = calcularCustosPorUnidade(
-    compra.quantidade,
-    compra.unidade,
-    compra.valorPago
-  );
+  const pathCompra = 'compras';
+  const pathIngrediente = 'ingredientes';
+  try {
+    const userId = getUserId();
+    const { custoPorKg, custoPorGrama, custoPorUnidade } = calcularCustosPorUnidade(
+      compra.quantidade,
+      compra.unidade,
+      compra.valorPago
+    );
 
-  const novaCompra = {
-    ...compra,
-    userId,
-    custoPorKg: custoPorKg || 0,
-    custoPorGrama: custoPorGrama || 0,
-    custoPorUnidade: custoPorUnidade || 0,
-    criadoEm: new Date().toISOString()
-  };
-
-  const docRef = await addDoc(collection(db, 'compras'), novaCompra);
-
-  // Update or Create Ingrediente
-  const ingredientes = await getIngredientes();
-  const index = ingredientes.findIndex(i => i.nome.toLowerCase() === compra.nomeProduto.toLowerCase());
-  
-  const historicoEntry: HistoricoPreco = {
-    id: crypto.randomUUID(),
-    data: compra.data,
-    valorPago: compra.valorPago,
-    quantidade: compra.quantidade,
-    unidade: compra.unidade,
-    custoPorKg: custoPorKg || 0,
-    custoPorGrama: custoPorGrama || 0,
-    custoPorUnidade: custoPorUnidade || 0,
-    localCompra: compra.localCompra
-  };
-
-  if (index !== -1) {
-    const ing = ingredientes[index];
-    const ingRef = doc(db, 'ingredientes', ing.id);
-    await updateDoc(ingRef, {
-      categoria: compra.categoria,
-      ultimoCustoPorKg: custoPorKg ?? ing.ultimoCustoPorKg,
-      ultimoCustoPorGrama: custoPorGrama ?? ing.ultimoCustoPorGrama,
-      ultimoCustoPorUnidade: custoPorUnidade ?? ing.ultimoCustoPorUnidade,
-      dataUltimaCompra: compra.data,
-      localUltimaCompra: compra.localCompra,
-      historicoPrecos: [historicoEntry, ...ing.historicoPrecos].slice(0, 50)
-    });
-  } else {
-    const novoIng = {
+    const novaCompra = {
+      ...compra,
       userId,
-      nome: compra.nomeProduto,
-      categoria: compra.categoria,
-      ultimoCustoPorKg: custoPorKg || 0,
-      ultimoCustoPorGrama: custoPorGrama || 0,
-      ultimoCustoPorUnidade: custoPorUnidade || 0,
-      dataUltimaCompra: compra.data,
-      localUltimaCompra: compra.localCompra,
-      historicoPrecos: [historicoEntry]
+      custoPorKg: custoPorKg || 0,
+      custoPorGrama: custoPorGrama || 0,
+      custoPorUnidade: custoPorUnidade || 0,
+      criadoEm: new Date().toISOString()
     };
-    await addDoc(collection(db, 'ingredientes'), novoIng);
-  }
 
-  return { id: docRef.id, ...novaCompra } as Compra;
+    const docRef = await addDoc(collection(db, pathCompra), novaCompra);
+
+    // Update or Create Ingrediente
+    const ingredientes = await getIngredientes();
+    const index = ingredientes.findIndex(i => i.nome.toLowerCase() === compra.nomeProduto.toLowerCase());
+    
+    const historicoEntry: HistoricoPreco = {
+      id: crypto.randomUUID(),
+      data: compra.data,
+      valorPago: compra.valorPago,
+      quantidade: compra.quantidade,
+      unidade: compra.unidade,
+      custoPorKg: custoPorKg || 0,
+      custoPorGrama: custoPorGrama || 0,
+      custoPorUnidade: custoPorUnidade || 0,
+      localCompra: compra.localCompra
+    };
+
+    if (index !== -1) {
+      const ing = ingredientes[index];
+      const ingRef = doc(db, pathIngrediente, ing.id);
+      await updateDoc(ingRef, {
+        categoria: compra.categoria,
+        ultimoCustoPorKg: custoPorKg ?? ing.ultimoCustoPorKg,
+        ultimoCustoPorGrama: custoPorGrama ?? ing.ultimoCustoPorGrama,
+        ultimoCustoPorUnidade: custoPorUnidade ?? ing.ultimoCustoPorUnidade,
+        dataUltimaCompra: compra.data,
+        localUltimaCompra: compra.localCompra,
+        historicoPrecos: [historicoEntry, ...ing.historicoPrecos].slice(0, 50)
+      });
+    } else {
+      const novoIng = {
+        userId,
+        nome: compra.nomeProduto,
+        categoria: compra.categoria,
+        ultimoCustoPorKg: custoPorKg || 0,
+        ultimoCustoPorGrama: custoPorGrama || 0,
+        ultimoCustoPorUnidade: custoPorUnidade || 0,
+        dataUltimaCompra: compra.data,
+        localUltimaCompra: compra.localCompra,
+        historicoPrecos: [historicoEntry]
+      };
+      await addDoc(collection(db, pathIngrediente), novoIng);
+    }
+
+    return { id: docRef.id, ...novaCompra } as Compra;
+  } catch (error) {
+    handleFirestoreError(error, OperationType.WRITE, pathCompra);
+  }
 };
 
 export const saveMarmita = async (marmita: Omit<Marmita, 'id' | 'criadoEm' | 'atualizadoEm'>) => {
-  const userId = getUserId();
-  const now = new Date().toISOString();
-  
-  const novaMarmita = {
-    ...marmita,
-    userId,
-    criadoEm: now,
-    atualizadoEm: now
-  };
+  const path = 'marmitas';
+  try {
+    const userId = getUserId();
+    const now = new Date().toISOString();
+    
+    const novaMarmita = {
+      ...marmita,
+      userId,
+      criadoEm: now,
+      atualizadoEm: now
+    };
 
-  const docRef = await addDoc(collection(db, 'marmitas'), novaMarmita);
-  return { id: docRef.id, ...novaMarmita } as Marmita;
+    const docRef = await addDoc(collection(db, path), novaMarmita);
+    return { id: docRef.id, ...novaMarmita } as Marmita;
+  } catch (error) {
+    handleFirestoreError(error, OperationType.CREATE, path);
+  }
 };
 
 export const deleteMarmita = async (id: string) => {
-  await deleteDoc(doc(db, 'marmitas', id));
+  const path = 'marmitas';
+  try {
+    await deleteDoc(doc(db, path, id));
+  } catch (error) {
+    handleFirestoreError(error, OperationType.DELETE, path);
+  }
 };
 
 export const deleteIngrediente = async (id: string) => {
-  await deleteDoc(doc(db, 'ingredientes', id));
+  const path = 'ingredientes';
+  try {
+    await deleteDoc(doc(db, path, id));
+  } catch (error) {
+    handleFirestoreError(error, OperationType.DELETE, path);
+  }
 };
 
 export const saveIngredienteManual = async (nome: string, categoria: Categoria) => {
-  const userId = getUserId();
-  const currentIngredientes = await getIngredientes();
-  
-  if (currentIngredientes.some(i => i.nome.toLowerCase() === nome.toLowerCase())) {
-    return;
+  const path = 'ingredientes';
+  try {
+    const userId = getUserId();
+    const currentIngredientes = await getIngredientes();
+    
+    if (currentIngredientes.some(i => i.nome.toLowerCase() === nome.toLowerCase())) {
+      return;
+    }
+
+    const novoIng = {
+      userId,
+      nome,
+      categoria,
+      dataUltimaCompra: new Date().toISOString().split('T')[0],
+      localUltimaCompra: 'Pendente',
+      historicoPrecos: []
+    };
+
+    await addDoc(collection(db, path), novoIng);
+  } catch (error) {
+    handleFirestoreError(error, OperationType.CREATE, path);
   }
-
-  const novoIng = {
-    userId,
-    nome,
-    categoria,
-    dataUltimaCompra: new Date().toISOString().split('T')[0],
-    localUltimaCompra: 'Pendente',
-    historicoPrecos: []
-  };
-
-  await addDoc(collection(db, 'ingredientes'), novoIng);
 };
 
 export const deleteCompra = async (id: string) => {
-  await deleteDoc(doc(db, 'compras', id));
+  const path = 'compras';
+  try {
+    await deleteDoc(doc(db, path, id));
+  } catch (error) {
+    handleFirestoreError(error, OperationType.DELETE, path);
+  }
 };
 
 export const updateMarmita = async (marmita: Marmita) => {
-  const docRef = doc(db, 'marmitas', marmita.id);
-  const { id, ...data } = marmita;
-  await updateDoc(docRef, {
-    ...data,
-    atualizadoEm: new Date().toISOString()
-  });
+  const path = 'marmitas';
+  try {
+    const docRef = doc(db, path, marmita.id);
+    const { id, ...data } = marmita;
+    await updateDoc(docRef, {
+      ...data,
+      atualizadoEm: new Date().toISOString()
+    });
+  } catch (error) {
+    handleFirestoreError(error, OperationType.UPDATE, path);
+  }
 };
 

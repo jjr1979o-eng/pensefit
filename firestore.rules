@@ -19,6 +19,14 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == resource.data.userId;
     }
 
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
     function isValidId(id) {
        return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
     }
@@ -31,31 +39,29 @@ service cloud.firestore {
     match /users/{userId} {
       allow get: if isOwner(userId);
       allow create: if isOwner(userId) && 
-        request.resource.data.keys().hasAll(['uid', 'email', 'createdAt']) &&
-        request.resource.data.uid == request.auth.uid;
-      allow update: if isOwner(userId) && 
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['displayName', 'photoURL']);
+        incoming().uid == userId;
+      allow update: if isOwner(userId);
     }
 
     match /ingredientes/{ingredienteId} {
-      allow read: if isDocOwner();
-      allow create: if isSignedIn() && checkUserId(request.resource.data) && isValidId(ingredienteId);
-      allow update: if isDocOwner() && checkUserId(request.resource.data);
-      allow delete: if isDocOwner();
+      allow read: if isSignedIn() && (resource == null || resource.data.userId == request.auth.uid);
+      allow create: if isSignedIn() && incoming().userId == request.auth.uid;
+      allow update: if isSignedIn() && existing().userId == request.auth.uid && incoming().userId == request.auth.uid;
+      allow delete: if isSignedIn() && existing().userId == request.auth.uid;
     }
 
     match /marmitas/{marmitaId} {
-      allow read: if isDocOwner();
-      allow create: if isSignedIn() && checkUserId(request.resource.data) && isValidId(marmitaId);
-      allow update: if isDocOwner() && checkUserId(request.resource.data);
-      allow delete: if isDocOwner();
+      allow read: if isSignedIn() && (resource == null || resource.data.userId == request.auth.uid);
+      allow create: if isSignedIn() && incoming().userId == request.auth.uid;
+      allow update: if isSignedIn() && existing().userId == request.auth.uid && incoming().userId == request.auth.uid;
+      allow delete: if isSignedIn() && existing().userId == request.auth.uid;
     }
 
     match /compras/{compraId} {
-      allow read: if isDocOwner();
-      allow create: if isSignedIn() && checkUserId(request.resource.data) && isValidId(compraId);
-      allow update: if isDocOwner() && checkUserId(request.resource.data);
-      allow delete: if isDocOwner();
+      allow read: if isSignedIn() && (resource == null || resource.data.userId == request.auth.uid);
+      allow create: if isSignedIn() && incoming().userId == request.auth.uid;
+      allow update: if isSignedIn() && existing().userId == request.auth.uid && incoming().userId == request.auth.uid;
+      allow delete: if isSignedIn() && existing().userId == request.auth.uid;
     }
   }
 }

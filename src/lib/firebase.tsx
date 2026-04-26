@@ -10,6 +10,18 @@ export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
 
 const googleProvider = new GoogleAuthProvider();
 
+async function testConnection() {
+  try {
+    const { getDocFromServer, doc } = await import('firebase/firestore');
+    await getDocFromServer(doc(db, 'test', 'connection'));
+  } catch (error) {
+    if(error instanceof Error && error.message.includes('the client is offline')) {
+      console.error("Please check your Firebase configuration.");
+    }
+  }
+}
+testConnection();
+
 interface AuthContextType {
   user: User | null;
   loading: boolean;
@@ -26,15 +38,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
-        // Save user to Firestore
+        // Only save profile if it doesn't exist or needs update
         const userRef = doc(db, 'users', user.uid);
-        await setDoc(userRef, {
-          uid: user.uid,
-          email: user.email,
-          displayName: user.displayName,
-          photoURL: user.photoURL,
-          createdAt: new Date().toISOString(),
-        }, { merge: true });
+        const userSnap = await getDoc(userRef);
+        
+        if (!userSnap.exists()) {
+          await setDoc(userRef, {
+            uid: user.uid,
+            email: user.email,
+            displayName: user.displayName,
+            photoURL: user.photoURL,
+            createdAt: new Date().toISOString(),
+          });
+        }
         setUser(user);
       } else {
         setUser(null);
